@@ -26,16 +26,13 @@ function confirmAction() {
     //tesseract worker loded with langagua option
     // now check the action text
     var ActionIMG = ScreenCapture(0, 0, 232, 21);
-    var img = ActionIMG.image;
     console.log("Buffering img");
-    var ImgBuffer = Buffer.from(ActionIMG.image, 'base64');
-    fs.writeFile("test.jpg", ImgBuffer, function(err) { });
-    console.log("loading worker and reading text" + ImgBuffer);
+    console.log("loading worker and reading text");
       (async () => {
         await worker.load();
         await worker.loadLanguage('eng');
         await worker.initialize('eng');
-        const { data: { text } } = await worker.recognize();
+        const { data: { text } } = await worker.recognize(ActionIMG);
         console.log(text);
         await worker.terminate();
       })();
