@@ -35,16 +35,57 @@ function findTree() {
     // the image at width = 1300, height = 400.
     // you should adjust this to your own screen size. you might also try reducing the size
     // if this is running slow for you.
-    var x = 0, y = 155, width = 1883, height = 594;
+    var x = 0, y = 0, width = 1080, height = 1920;
     var img = robot.screen.capture(x, y, width, height);
 
     // make an array that contains colors of the trees we want to click on.
     // I'm targeting the brown colors of the trunks.
-    var tree_colors = ["5a3c1b", "503619", "54381a", "705634", "634929", "574328"];
+    var tree_colors = ["6b4e2b", "604626", "634928", "573f22", "674429", "574328"];
 
-    // sample up to 500 random pixels inside our screenshot until we find one that matches
+    // 
     // a tree color.
-    for (var i = 0; i < 500; i++) {
+    const RADIUS_INCREMENT = 50;
+    var n = 4;
+
+    for (var r = 0; r < Math.min(width / 2, height / 2); r += RADIUS_INCREMENT) {
+        for (var theta = 0; theta < 2 * Math.PI; theta += Math.PI / (n)) {
+            x = r * Math.cos(theta);
+            y = r * Math.sin(theta);
+            console.log("Coords are (" + Math.floor(x) + ", " + Math.floor(y) + ") relative to the center")
+            screenX = x + width / 2;
+            screenY = y + height / 2;
+
+            console.log("Absolute coords are (" + screenX + ", " + screenY + ")")
+            var sample_color = img.colorAt(Math.floor(screenX), Math.floor(screenY));
+            if(tree_colors.includes(sample_color)){
+                if ( confirmAction(screenX, screenY) ) {
+                    return  {x:screenX, y: screenY};
+                }
+            }
+            if (r == 0) { break; }
+        }
+    }
+    n++;
+
+
+
+    /*const PIXELS_TO_SKIP = 20
+    var phase = 0;
+
+    for (var i = 0; i++; i < ((width-1) / PIXELS_TO_SKIP) ) {
+        var screen_x = ((phase + 20) * i);
+        var sample_color = img.colorAt(screen_x,screen_y, random_y);
+        for (var j = 0; i++; j < ((height-1) / PIXELS_TO_SKIP)) {
+            var screen_y = ((phase + 20));
+            if ( confirmAction(screen_x, screen_y) ) {
+                return  {x: screen_x, y: screen_y};
+            }
+            else {
+            phase += 5;
+            }
+        }
+    }*|
+    /*for (var i = 0; i < 500; i++) {
         console.log
         var random_x = getRandomInt(0, width-1);
         var random_y = getRandomInt(0, height-1);
@@ -67,8 +108,7 @@ function findTree() {
                 
             }
         }
-    }
-    return false;
+    }*/
 }
 
 function rotateCamera() {
