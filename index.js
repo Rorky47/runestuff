@@ -99,14 +99,17 @@ function confirmAction(screen_x, screen_y) {
 // utility functions
 
 function imgtotext(imgData){
-    console.log("turning img to text")
-    worker.load();
-    worker.loadLanguage('eng');
-    worker.initialize('eng');
-    const text = worker.recognize(imgData);
-    console.log(text);
-    worker.terminate();
-    return text;
+    console.log("turning img to texts")
+    const imgText = (async () => {
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        const { data: { text } } = await worker.recognize(imgData);
+        console.log(text);
+        await worker.terminate();
+        return text;
+      })();
+    return imgText;
 }
 
 function screenCaptureToFile(robotScreenPic, path) {
