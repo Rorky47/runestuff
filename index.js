@@ -1,8 +1,6 @@
 //imports
 let Jimp = require('jimp');
 var robot = require('robotjs'); //mouse mpvement
-var fs = require('fs')
-const sharp = require('sharp');
 const { createWorker } = require("tesseract.js"); //read text from sc
 const worker = createWorker({
     slogger: m => console.log(m)
@@ -101,6 +99,7 @@ function confirmAction(screen_x, screen_y) {
 function imgtotext(imgData){
     console.log("turning img to texts")
     const imgText = (async () => {
+        console.log("loading img prossesor")
         await worker.load();
         await worker.loadLanguage('eng');
         await worker.initialize('eng');
