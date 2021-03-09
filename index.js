@@ -3,7 +3,8 @@ let Jimp = require('jimp');
 var robot = require('robotjs'); //mouse mpvement
 const { createWorker } = require("tesseract.js"); //read text from sc
 const worker = createWorker({
-    slogger: m => console.log(m)
+    slogger: m => console.log(m),
+    err: e => console.error(e),
 });
 
 main();
@@ -35,80 +36,43 @@ function findTree() {
     // the image at width = 1300, height = 400.
     // you should adjust this to your own screen size. you might also try reducing the size
     // if this is running slow for you.
-    var x = 0, y = 0, width = 1080, height = 1920;
+    var x = 0, y = 0, width = 1920, height = 1080;
     var img = robot.screen.capture(x, y, width, height);
+    console.log(img.width, img.height);
 
     // make an array that contains colors of the trees we want to click on.
     // I'm targeting the brown colors of the trunks.
-    var tree_colors = ["6b4e2b", "604626", "634928", "573f22", "674429", "574328"];
+    var tree_colors = ["6b4e2b", "604626", "634928", "573f22", "674429", "574328","5c4425","604627","634928","664b2a","694e2b"];
 
     // 
     // a tree color.
     const RADIUS_INCREMENT = 50;
     var n = 4;
+    for(n =4; n < 9; n++){ 
+        for (var r = 0; r < Math.min(width / 2, height / 2); r += RADIUS_INCREMENT) {
+            for (var theta = 0; theta < 2 * Math.PI; theta += Math.PI / (n)) {
+                x = r * Math.cos(theta);
+                y = r * Math.sin(theta);
+                console.log("Coords are (" + Math.floor(x) + ", " + Math.floor(y) + ") relative to the center")
+                screenX = Math.floor(x + width / 2);
+                screenY = Math.floor(y + height / 2);
 
-    for (var r = 0; r < Math.min(width / 2, height / 2); r += RADIUS_INCREMENT) {
-        for (var theta = 0; theta < 2 * Math.PI; theta += Math.PI / (n)) {
-            x = r * Math.cos(theta);
-            y = r * Math.sin(theta);
-            console.log("Coords are (" + Math.floor(x) + ", " + Math.floor(y) + ") relative to the center")
-            screenX = x + width / 2;
-            screenY = y + height / 2;
-
-            console.log("Absolute coords are (" + screenX + ", " + screenY + ")")
-            var sample_color = img.colorAt(Math.floor(screenX), Math.floor(screenY));
-            if(tree_colors.includes(sample_color)){
-                if ( confirmAction(screenX, screenY) ) {
-                    return  {x:screenX, y: screenY};
+                console.log("Absolute coords are (" + screenX + ", " + screenY + ")")
+                var sample_color = img.colorAt(screenX, screenY);
+                if(tree_colors.includes(sample_color)){
+                    if (confirmAction(screenX, screenY)) {
+                        return  {x:screenX, y:screenY};
+                    }
+                    else{
+                        console.log("unconfermd tree at" + screenX, screenY);
+                    }
                 }
+                if (r == 0) { break; }
+
             }
-            if (r == 0) { break; }
         }
     }
-    n++;
-
-
-
-    /*const PIXELS_TO_SKIP = 20
-    var phase = 0;
-
-    for (var i = 0; i++; i < ((width-1) / PIXELS_TO_SKIP) ) {
-        var screen_x = ((phase + 20) * i);
-        var sample_color = img.colorAt(screen_x,screen_y, random_y);
-        for (var j = 0; i++; j < ((height-1) / PIXELS_TO_SKIP)) {
-            var screen_y = ((phase + 20));
-            if ( confirmAction(screen_x, screen_y) ) {
-                return  {x: screen_x, y: screen_y};
-            }
-            else {
-            phase += 5;
-            }
-        }
-    }*|
-    /*for (var i = 0; i < 500; i++) {
-        console.log
-        var random_x = getRandomInt(0, width-1);
-        var random_y = getRandomInt(0, height-1);
-        var sample_color = img.colorAt(random_x, random_y);
-
-        if (tree_colors.includes(sample_color)) {
-            // because we took a cropped screenshot, and we want to return the pixel position
-            // on the entire screen, we can account for that by adding the relative crop x and y
-            // to the pixel position found in the screenshot;
-            var screen_x = random_x + x;
-            var screen_y = random_y + y;
-            console.log(screen_x, screen_y)
-            // if we don't confirm that this coordinate is a tree, the loop will continue
-            if (confirmAction(screen_x, screen_y)) {
-                console.log("Found a tree at: " + screen_x + ", " + screen_y + " color " + sample_color);
-                return  {x: screen_x, y: screen_y};
-            } else {
-                // this just helps us debug the script
-                console.log("Unconfirmed tree at: " + screen_x + ", " + screen_y + " color " + sample_color);
-                
-            }
-        }
-    }*/
+    return false;
 }
 
 function rotateCamera() {
@@ -129,30 +93,24 @@ function confirmAction(screen_x, screen_y) {
     var ActionIMG = robot.screen.capture(4, 4, 228, 16);
     screenCaptureToFile(ActionIMG, 'test.bmp')
     console.log("loading worker and reading text");
-    if (imgtotext('test.bmp').conetent == "Chop Down Tree"){
-        return true;
-    }
 }
 
 // utility functions
 
-function imgtotext(imgData){
+async function imgtotext(imgData){
     console.log("turning img to texts")
-    const imgText = (async () => {
-        console.log("loading img prossesor")
-        await worker.load();
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
-        const { data: { text } } = await worker.recognize(imgData);
-        console.log(text);
-        await worker.terminate();
-        return text;
-      })();
-    return imgText;
+    console.log("loading img prossesor");
+    await worker.load(); 
+    await worker.loadLanguage('eng');
+    await worker.initialize('eng');
+    const { data: { text } } = await worker.recognize(imgData);
+    console.log(text);
+    await worker.terminate();
+    console.log("text loaded");
+    return text;
 }
 
 function screenCaptureToFile(robotScreenPic, path) {
-    return new Promise((resolve, reject) => {
         try {
             const image = new Jimp(robotScreenPic.width, robotScreenPic.height);
             let pos = 0;
@@ -162,14 +120,11 @@ function screenCaptureToFile(robotScreenPic, path) {
                 image.bitmap.data[idx + 0] = robotScreenPic.image.readUInt8(pos++);
                 image.bitmap.data[idx + 3] = robotScreenPic.image.readUInt8(pos++);
             });
-            image.resize(456,48,Jimp.RESIZE_BILINEAR)
-            image.normalize();
             image.write(path, resolve);
         } catch (e) {
             console.error(e);
             reject(e);
         }
-    });
 }
 
 function sleep(ms) {
